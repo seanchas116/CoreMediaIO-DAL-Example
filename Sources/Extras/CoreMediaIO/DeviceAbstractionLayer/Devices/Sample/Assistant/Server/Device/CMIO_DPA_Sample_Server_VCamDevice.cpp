@@ -16,6 +16,13 @@
 #include "CMIO_DPA_Sample_Server_VCamInputStream.h"
 #include "CAHostTimeBase.h"
 
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/un.h>
+
 namespace CMIO { namespace DPA { namespace Sample { namespace Server
 {
 	#pragma mark -
@@ -27,7 +34,7 @@ namespace CMIO { namespace DPA { namespace Sample { namespace Server
         Device()
 	{
 		CreateStreams();
-        
+
         mSequenceFile = fopen("/Library/CoreMediaIO/Plug-Ins/DAL/SampleVCam.plugin/Contents/Resources/ntsc2vuy720x480.yuv", "rb");
         mFrameSize = 720 * 480 * 2;
 
@@ -77,18 +84,83 @@ namespace CMIO { namespace DPA { namespace Sample { namespace Server
     void* VCamDevice::EmitFrame(void* device) {
         VCamDevice* vcamDevice = (VCamDevice*)device;
         uint8_t* framebuffer = new uint8_t[vcamDevice->mFrameSize];
-        
-        while (true) {
-            usleep(1000 * 1000 / 30);
-            
-            fseek(vcamDevice->mSequenceFile, (vcamDevice->mFrameIndex % vcamDevice->mFrameCount) * vcamDevice->mFrameSize, SEEK_SET);
-            fread(framebuffer, 1, vcamDevice->mFrameSize, vcamDevice->mSequenceFile);
-            ++vcamDevice->mFrameIndex;
-            // Hack because it seems that vcamDevice->mInputStream->GetTimecode() is always 0
-            UInt64 vbiTime = CAHostTimeBase::GetCurrentTimeInNanos();
-            vcamDevice->mInputStream->FrameArrived(vcamDevice->mFrameSize, framebuffer, vbiTime);
+
+//        while (true) {
+//            usleep(1000 * 1000 / 30);
+//
+//            fseek(vcamDevice->mSequenceFile, (vcamDevice->mFrameIndex % vcamDevice->mFrameCount) * vcamDevice->mFrameSize, SEEK_SET);
+//            fread(framebuffer, 1, vcamDevice->mFrameSize, vcamDevice->mSequenceFile);
+//            ++vcamDevice->mFrameIndex;
+//            // Hack because it seems that vcamDevice->mInputStream->GetTimecode() is always 0
+//            UInt64 vbiTime = CAHostTimeBase::GetCurrentTimeInNanos();
+//            vcamDevice->mInputStream->FrameArrived(vcamDevice->mFrameSize, framebuffer, vbiTime);
+//        }
+
+        // サーバーソケット作成
+        int sock = socket(AF_UNIX, SOCK_STREAM, 0);
+        if (sock == -1)
+        {
+            perror("socket");
+            return NULL;
         }
-        
+
+        // struct sockaddr_un 作成
+        struct sockaddr_un sa = {0};
+        sa.sun_family = AF_UNIX;
+        strcpy(sa.sun_path, "/tmp/unix-domain-socket");
+
+        // 既に同一ファイルが存在していたら削除
+        remove(sa.sun_path);
+
+        // バインド
+        if (bind(sock, (struct sockaddr*) &sa, sizeof(struct sockaddr_un)) == -1)
+        {
+            perror("bind");
+            goto bail;
+        }
+
+        // リッスン
+        if (listen(sock, 128) == -1)
+        {
+            perror("listen");
+            goto bail;
+        }
+
+        while (1)
+        {
+            // クライアントの接続を待つ
+            int fd = accept(sock, NULL, NULL);
+            if (fd == -1)
+            {
+                perror("accept");
+                goto bail;
+            }
+
+            // 受信
+            char buffer[4096];
+            int recv_size = read(fd, buffer, sizeof(buffer) - 1);
+            if (recv_size == -1)
+            {
+                perror("read");
+                close(fd);
+                goto bail;
+            }
+
+            // 受信内容を表示
+            buffer[recv_size] = '\0';
+            printf("message: %s\n", buffer);
+
+            // ソケットのクローズ
+            if (close(fd) == -1)
+            {
+                perror("close");
+                goto bail;
+            }
+        }
+
+    bail:
+        // エラーが発生した場合の処理
+        close(sock);
         return NULL;
     }
 
