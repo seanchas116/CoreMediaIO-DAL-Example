@@ -108,7 +108,7 @@ namespace CMIO { namespace DPA { namespace Sample { namespace Server
         // struct sockaddr_un 作成
         struct sockaddr_un sa = {0};
         sa.sun_family = AF_UNIX;
-        strcpy(sa.sun_path, "/tmp/unix-domain-socket");
+        strcpy(sa.sun_path, "/tmp/vcam-socket");
 
         // 既に同一ファイルが存在していたら削除
         remove(sa.sun_path);
