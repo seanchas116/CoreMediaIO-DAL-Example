@@ -23,6 +23,8 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 
+#include <iostream>
+
 namespace CMIO { namespace DPA { namespace Sample { namespace Server
 {
 	#pragma mark -
@@ -136,26 +138,28 @@ namespace CMIO { namespace DPA { namespace Sample { namespace Server
                 goto bail;
             }
 
-            // 受信
-            char buffer[4096];
-            int recv_size = read(fd, buffer, sizeof(buffer) - 1);
-            if (recv_size == -1)
-            {
-                perror("read");
-                close(fd);
-                goto bail;
+            while (true) {
+                // 受信
+                int recv_size = read(fd, framebuffer, vcamDevice->mFrameSize);
+                if (recv_size == -1)
+                {
+                    perror("read");
+                    close(fd);
+                    goto bail;
+                }
+                std::cout << recv_size << std::endl;
             }
 
-            // 受信内容を表示
-            buffer[recv_size] = '\0';
-            printf("message: %s\n", buffer);
-
-            // ソケットのクローズ
-            if (close(fd) == -1)
-            {
-                perror("close");
-                goto bail;
-            }
+//            // 受信内容を表示
+//            buffer[recv_size] = '\0';
+//            printf("message: %s\n", buffer);
+//
+//            // ソケットのクローズ
+//            if (close(fd) == -1)
+//            {
+//                perror("close");
+//                goto bail;
+//            }
         }
 
     bail:
