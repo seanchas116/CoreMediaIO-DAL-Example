@@ -138,9 +138,11 @@ namespace CMIO { namespace DPA { namespace Sample { namespace Server
                 goto bail;
             }
 
+            int totalReceived = 0;
+
             while (true) {
                 // 受信
-                int recv_size = read(fd, framebuffer, vcamDevice->mFrameSize);
+                int recv_size = read(fd, framebuffer + totalReceived, vcamDevice->mFrameSize - totalReceived);
                 if (recv_size == -1)
                 {
                     perror("read");
@@ -148,6 +150,14 @@ namespace CMIO { namespace DPA { namespace Sample { namespace Server
                     goto bail;
                 }
                 std::cout << recv_size << std::endl;
+                totalReceived += recv_size;
+
+                if (totalReceived == vcamDevice->mFrameSize) {
+                    // frame complete
+                    UInt64 vbiTime = CAHostTimeBase::GetCurrentTimeInNanos();
+                    vcamDevice->mInputStream->FrameArrived(vcamDevice->mFrameSize, framebuffer, vbiTime);
+                    totalReceived = 0;
+                }
             }
 
 //            // 受信内容を表示
