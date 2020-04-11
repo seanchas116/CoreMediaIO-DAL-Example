@@ -144,6 +144,11 @@ namespace CMIO { namespace DPA { namespace Sample { namespace Server
                     close(fd);
                     goto bail;
                 }
+                if (recv_size == 0) {
+                    // disconnected
+                    totalReceived = 0;
+                    break;
+                }
                 std::cout << recv_size << std::endl;
                 totalReceived += recv_size;
 
@@ -155,16 +160,11 @@ namespace CMIO { namespace DPA { namespace Sample { namespace Server
                 }
             }
 
-//            // 受信内容を表示
-//            buffer[recv_size] = '\0';
-//            printf("message: %s\n", buffer);
-//
-//            // ソケットのクローズ
-//            if (close(fd) == -1)
-//            {
-//                perror("close");
-//                goto bail;
-//            }
+            // ソケットのクローズ
+            if (close(fd) == -1) {
+                perror("close");
+                goto bail;
+            }
         }
 
     bail:
