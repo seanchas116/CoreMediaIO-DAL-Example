@@ -100,8 +100,7 @@ namespace CMIO { namespace DPA { namespace Sample { namespace Server
 
         // サーバーソケット作成
         int sock = socket(AF_UNIX, SOCK_STREAM, 0);
-        if (sock == -1)
-        {
+        if (sock == -1) {
             perror("socket");
             return NULL;
         }
@@ -115,25 +114,21 @@ namespace CMIO { namespace DPA { namespace Sample { namespace Server
         remove(sa.sun_path);
 
         // バインド
-        if (bind(sock, (struct sockaddr*) &sa, sizeof(struct sockaddr_un)) == -1)
-        {
+        if (bind(sock, (struct sockaddr*) &sa, sizeof(struct sockaddr_un)) == -1) {
             perror("bind");
             goto bail;
         }
 
         // リッスン
-        if (listen(sock, 128) == -1)
-        {
+        if (listen(sock, 128) == -1) {
             perror("listen");
             goto bail;
         }
 
-        while (1)
-        {
+        while (1) {
             // クライアントの接続を待つ
             int fd = accept(sock, NULL, NULL);
-            if (fd == -1)
-            {
+            if (fd == -1) {
                 perror("accept");
                 goto bail;
             }
