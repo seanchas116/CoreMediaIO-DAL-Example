@@ -41,12 +41,15 @@ namespace CMIO { namespace DPA { namespace Sample { namespace Server
         
     private:
         pthread_t                   mThread;
+        pthread_t                   mReceiveThread;
         FILE*                       mSequenceFile;
         size_t                      mFrameIndex;
         size_t                      mFrameSize;
         size_t                      mFrameCount;
+        uint8_t* mFramebuffer;
         
         static void*                EmitFrame(void*);
+        static void*                ReceiveFrame(void*);
 	};
 }}}}
 #endif

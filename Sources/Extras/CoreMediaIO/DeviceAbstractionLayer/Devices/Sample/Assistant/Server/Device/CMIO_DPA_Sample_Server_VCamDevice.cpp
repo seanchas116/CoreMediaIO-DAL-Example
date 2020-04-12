@@ -42,8 +42,11 @@ namespace CMIO { namespace DPA { namespace Sample { namespace Server
 
         fseek(mSequenceFile, 0, SEEK_END);
         mFrameCount = ftell(mSequenceFile) / mFrameSize;
-        
+
+        mFramebuffer = new uint8_t[mFrameSize];
+
         pthread_create(&mThread, NULL, &VCamDevice::EmitFrame, this);
+        pthread_create(&mReceiveThread, NULL, &VCamDevice::ReceiveFrame, this);
 	}
 	
 	//-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -85,7 +88,7 @@ namespace CMIO { namespace DPA { namespace Sample { namespace Server
     //-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     void* VCamDevice::EmitFrame(void* device) {
         VCamDevice* vcamDevice = (VCamDevice*)device;
-        uint8_t* framebuffer = new uint8_t[vcamDevice->mFrameSize];
+//        uint8_t* framebuffer = new uint8_t[vcamDevice->mFrameSize];
 
 //        while (true) {
 //            usleep(1000 * 1000 / 30);
@@ -97,6 +100,17 @@ namespace CMIO { namespace DPA { namespace Sample { namespace Server
 //            UInt64 vbiTime = CAHostTimeBase::GetCurrentTimeInNanos();
 //            vcamDevice->mInputStream->FrameArrived(vcamDevice->mFrameSize, framebuffer, vbiTime);
 //        }
+
+        while (true) {
+            usleep(1000 * 1000 / 30);
+
+            UInt64 vbiTime = CAHostTimeBase::GetCurrentTimeInNanos();
+            vcamDevice->mInputStream->FrameArrived(vcamDevice->mFrameSize, vcamDevice->mFramebuffer, vbiTime);
+        }
+    }
+
+    void* VCamDevice::ReceiveFrame(void* device) {
+        VCamDevice* vcamDevice = (VCamDevice*)device;
 
         // サーバーソケット作成
         int sock = socket(AF_UNIX, SOCK_STREAM, 0);
@@ -144,7 +158,7 @@ namespace CMIO { namespace DPA { namespace Sample { namespace Server
 
             while (true) {
                 // 受信
-                int recv_size = read(fd, framebuffer + totalReceived, vcamDevice->mFrameSize - totalReceived);
+                int recv_size = read(fd, vcamDevice->mFramebuffer + totalReceived, vcamDevice->mFrameSize - totalReceived);
                 if (recv_size == -1)
                 {
                     perror("read");
@@ -161,8 +175,6 @@ namespace CMIO { namespace DPA { namespace Sample { namespace Server
 
                 if (totalReceived == vcamDevice->mFrameSize) {
                     // frame complete
-                    UInt64 vbiTime = CAHostTimeBase::GetCurrentTimeInNanos();
-                    vcamDevice->mInputStream->FrameArrived(vcamDevice->mFrameSize, framebuffer, vbiTime);
                     totalReceived = 0;
                     ++vcamDevice->mFrameCount;
                     std::cout << vcamDevice->mFrameCount << std::endl;
