@@ -105,6 +105,13 @@ namespace CMIO { namespace DPA { namespace Sample { namespace Server
             return NULL;
         }
 
+        // Set socket buffer size
+        int bufferSize = 1024 * 1024;
+        socklen_t bufferSizeLen = sizeof(bufferSize);
+        if (setsockopt(sock, SOL_SOCKET, SO_RCVBUF, reinterpret_cast<char *>(&bufferSize), bufferSizeLen) == -1) {
+            perror("setsockopt error");
+        }
+
         // struct sockaddr_un 作成
         struct sockaddr_un sa = {0};
         sa.sun_family = AF_UNIX;
