@@ -156,7 +156,7 @@ namespace CMIO { namespace DPA { namespace Sample { namespace Server
                     totalReceived = 0;
                     break;
                 }
-                std::cout << recv_size << std::endl;
+                //std::cout << recv_size << std::endl;
                 totalReceived += recv_size;
 
                 if (totalReceived == vcamDevice->mFrameSize) {
@@ -164,6 +164,8 @@ namespace CMIO { namespace DPA { namespace Sample { namespace Server
                     UInt64 vbiTime = CAHostTimeBase::GetCurrentTimeInNanos();
                     vcamDevice->mInputStream->FrameArrived(vcamDevice->mFrameSize, framebuffer, vbiTime);
                     totalReceived = 0;
+                    ++vcamDevice->mFrameCount;
+                    std::cout << vcamDevice->mFrameCount << std::endl;
                 }
             }
 
