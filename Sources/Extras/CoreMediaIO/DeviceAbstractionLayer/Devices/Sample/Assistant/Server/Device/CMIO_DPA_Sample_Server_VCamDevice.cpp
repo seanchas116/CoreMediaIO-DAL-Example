@@ -38,7 +38,7 @@ namespace CMIO { namespace DPA { namespace Sample { namespace Server
 		CreateStreams();
 
         mSequenceFile = fopen("/Library/CoreMediaIO/Plug-Ins/DAL/SampleVCam.plugin/Contents/Resources/ntsc2vuy720x480.yuv", "rb");
-        mFrameSize = 720 * 480 * 2;
+        mFrameSize = 1280 * 720 * 2;
 
         fseek(mSequenceFile, 0, SEEK_END);
         mFrameCount = ftell(mSequenceFile) / mFrameSize;
@@ -63,10 +63,10 @@ namespace CMIO { namespace DPA { namespace Sample { namespace Server
         UInt32 streamID = 0;
         
         CACFDictionary format;
-        format.AddUInt32(CFSTR(kIOVideoStreamFormatKey_CodecType), kYUV422_720x480);
+        format.AddUInt32(CFSTR(kIOVideoStreamFormatKey_CodecType), kYUV422_1280x720);
         format.AddUInt32(CFSTR(kIOVideoStreamFormatKey_CodecFlags), kSampleCodecFlags_30fps | kSampleCodecFlags_1001_1000_adjust);
-        format.AddUInt32(CFSTR(kIOVideoStreamFormatKey_Width), 720);
-        format.AddUInt32(CFSTR(kIOVideoStreamFormatKey_Height), 480);
+        format.AddUInt32(CFSTR(kIOVideoStreamFormatKey_Width), 1280);
+        format.AddUInt32(CFSTR(kIOVideoStreamFormatKey_Height), 720);
 
         CACFArray formats;
         formats.AppendDictionary(format.GetDict());
