@@ -67,7 +67,7 @@ namespace CMIO { namespace DPA { namespace Sample { namespace Server
         
         CACFDictionary format;
         format.AddUInt32(CFSTR(kIOVideoStreamFormatKey_CodecType), kYUV422_1280x720);
-        format.AddUInt32(CFSTR(kIOVideoStreamFormatKey_CodecFlags), kSampleCodecFlags_30fps | kSampleCodecFlags_1001_1000_adjust);
+        format.AddUInt32(CFSTR(kIOVideoStreamFormatKey_CodecFlags), kSampleCodecFlags_60fps | kSampleCodecFlags_1001_1000_adjust);
         format.AddUInt32(CFSTR(kIOVideoStreamFormatKey_Width), 1280);
         format.AddUInt32(CFSTR(kIOVideoStreamFormatKey_Height), 720);
 
@@ -102,7 +102,7 @@ namespace CMIO { namespace DPA { namespace Sample { namespace Server
 //        }
 
         while (true) {
-            usleep(1000 * 1000 / 30);
+            usleep(1000 * 1000 / 60);
 
             UInt64 vbiTime = CAHostTimeBase::GetCurrentTimeInNanos();
             vcamDevice->mInputStream->FrameArrived(vcamDevice->mFrameSize, vcamDevice->mFramebuffer, vbiTime);
